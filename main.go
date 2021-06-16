@@ -12,7 +12,7 @@ import (
 func main() {
 
 	// Setup the flags.
-	dbURL := flag.String("dburl", "mongodb://mongodb:27017/", "")
+	dbURL := flag.String("dburl", "mongodb://0.0.0.0:27017/", "")
 	timeout := flag.Int("dbtimeout", 9, "")
 
 	// Create the db.

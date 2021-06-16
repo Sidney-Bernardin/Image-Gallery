@@ -25,3 +25,12 @@ func (s *server) logging() adapter {
 		})
 	}
 }
+
+func (s *server) addHeader(k, v string) adapter {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add(k, v)
+			h.ServeHTTP(w, r)
+		})
+	}
+}
