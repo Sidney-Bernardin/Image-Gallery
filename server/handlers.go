@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (s *server) PostsCreate() http.HandlerFunc {
@@ -83,6 +84,12 @@ func (s *server) PostsGet() http.HandlerFunc {
 		// Get the post.
 		post, err := s.db.PostsGet(postID)
 		if err != nil {
+
+			if err == mongo.ErrNoDocuments {
+				s.err(w, errors.New("post not found"), http.StatusNotFound)
+				return
+			}
+
 			s.err(w, err, http.StatusInternalServerError)
 			return
 		}
@@ -161,16 +168,14 @@ func (s *server) PostsGetAll() http.HandlerFunc {
 }
 
 func (s *server) PostsDelete() http.HandlerFunc {
-
-	type Response struct{}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// Get the postID.
 		postID := mux.Vars(r)["postID"]
 
 		// Delete the post.
-		if err := s.db.PostsDelete(postID); err != nil {
+		err := s.db.PostsDelete(postID)
+		if err != nil && err != mongo.ErrNoDocuments {
 			s.err(w, err, http.StatusInternalServerError)
 			return
 		}

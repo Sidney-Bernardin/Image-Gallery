@@ -141,7 +141,7 @@ func TestPostsGet(t *testing.T) {
 	}{
 		{
 			"dosenotexist",
-			http.StatusInternalServerError,
+			http.StatusNotFound,
 		},
 		{
 			"exists",
@@ -212,13 +212,18 @@ func TestPostsDelete(t *testing.T) {
 	db := db.NewMockDB()
 	s := NewServer(db)
 
+	// Create a test table.
+	tt := []string{"exists", "dosenotexist"}
+
 	// Create the request and response-recorder.
-	r := httptest.NewRequest("DELETE", "/posts/12345", nil)
-	w := httptest.NewRecorder()
+	for _, tc := range tt {
+		r := httptest.NewRequest("DELETE", "/posts/"+tc, nil)
+		w := httptest.NewRecorder()
 
-	// Do the request.
-	s.ServeHTTP(w, r)
+		// Do the request.
+		s.ServeHTTP(w, r)
 
-	// Run tests.
-	is.Equal(w.Code, http.StatusNoContent)
+		// Run tests.
+		is.Equal(w.Code, http.StatusNoContent)
+	}
 }

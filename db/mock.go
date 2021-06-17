@@ -1,6 +1,6 @@
 package db
 
-import "errors"
+import "go.mongodb.org/mongo-driver/mongo"
 
 type MockDB struct{}
 
@@ -20,7 +20,7 @@ func (m *MockDB) PostsGet(postID string) (*Post, error) {
 		}, nil
 	}
 
-	return nil, errors.New("post not found")
+	return nil, mongo.ErrNoDocuments
 }
 
 func (m *MockDB) PostsGetAll(offset, limit int64) (*[]Post, error) {
