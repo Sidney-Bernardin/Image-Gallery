@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -124,4 +125,100 @@ func TestPostsCreate(t *testing.T) {
 		// Run tests.
 		is.Equal(w.Code, tc.expected)
 	}
+}
+
+func TestPostsGet(t *testing.T) {
+	is := is.New(t)
+
+	// Create the server with a mock db.
+	db := db.NewMockDB()
+	s := NewServer(db)
+
+	// Create a test table.
+	tt := []struct {
+		postID   string
+		expected int
+	}{
+		{
+			"dosenotexist",
+			http.StatusInternalServerError,
+		},
+		{
+			"exists",
+			http.StatusOK,
+		},
+	}
+
+	// Run the test cases.
+	for _, tc := range tt {
+
+		// Create the request and response-recorder.
+		r := httptest.NewRequest("GET", "/posts/"+tc.postID, nil)
+		w := httptest.NewRecorder()
+
+		// Do the request.
+		s.ServeHTTP(w, r)
+
+		// Run tests.
+		is.Equal(w.Code, tc.expected)
+	}
+}
+
+func TestPostsGetAll(t *testing.T) {
+	is := is.New(t)
+
+	// Create the server with a mock db.
+	db := db.NewMockDB()
+	s := NewServer(db)
+
+	// Create a test table.
+	tt := []struct {
+		offset   string
+		limit    string
+		expected int
+	}{
+		{
+			offset:   "0",
+			limit:    "10",
+			expected: http.StatusOK,
+		},
+		{
+			offset:   "10000000000000000000000000000000",
+			limit:    "100000000000000000000000000000000000000000000000000",
+			expected: http.StatusUnprocessableEntity,
+		},
+	}
+
+	// Run the test cases.
+	for _, tc := range tt {
+
+		// Create the request and response-recorder.
+		url := fmt.Sprintf("/posts/%s/%s", tc.offset, tc.limit)
+		r := httptest.NewRequest("GET", url, nil)
+		w := httptest.NewRecorder()
+
+		// Do the request.
+		s.ServeHTTP(w, r)
+
+		// Run tests.
+		is.Equal(w.Code, tc.expected)
+	}
+}
+
+func TestPostsDelete(t *testing.T) {
+	is := is.New(t)
+
+	// Create the server with a mock db.
+	db := db.NewMockDB()
+	s := NewServer(db)
+
+	// Create the request and response-recorder.
+	r := httptest.NewRequest("DELETE", "/posts/12345", nil)
+	w := httptest.NewRecorder()
+
+	// Do the request.
+	s.ServeHTTP(w, r)
+
+	// Run tests.
+	is.Equal(w.Code, http.StatusNoContent)
 }

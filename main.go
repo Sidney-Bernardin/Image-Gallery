@@ -12,6 +12,7 @@ import (
 func main() {
 
 	// Setup the flags.
+	port := flag.String("port", "8080", "")
 	dbURL := flag.String("dburl", "mongodb://0.0.0.0:27017/", "")
 	timeout := flag.Int("dbtimeout", 9, "")
 
@@ -25,6 +26,6 @@ func main() {
 	s := server.NewServer(db)
 
 	// Start the server.
-	logrus.Info("Listening on :8080...")
-	http.ListenAndServe(":8080", s)
+	logrus.Infof("Listening on :%s...", *port)
+	http.ListenAndServe(":"+*port, s)
 }
