@@ -1,6 +1,10 @@
 package db
 
-import "go.mongodb.org/mongo-driver/mongo"
+import (
+	"bytes"
+
+	"go.mongodb.org/mongo-driver/mongo"
+)
 
 type MockDB struct{}
 
@@ -29,4 +33,8 @@ func (m *MockDB) PostsGetAll(offset, limit int64) (*[]Post, error) {
 
 func (m *MockDB) PostsDelete(postID string) error {
 	return nil
+}
+
+func (m *MockDB) PostsThumbnailGet(postID string) (*bytes.Buffer, error) {
+	return nil, nil
 }

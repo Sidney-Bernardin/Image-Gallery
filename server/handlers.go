@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"root/db"
@@ -10,6 +12,12 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func (s *server) Index() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, World!")
+	}
+}
 
 func (s *server) PostsCreate() http.HandlerFunc {
 
@@ -99,7 +107,7 @@ func (s *server) PostsGet() http.HandlerFunc {
 			post.ID.Hex(),
 			post.Title,
 			post.Description,
-			"/posts/thumbnailfor" + post.Title,
+			"/poststhumbnail/" + post.ID.Hex(),
 		}
 
 		// Respond.
@@ -129,8 +137,7 @@ func (s *server) PostsGetAll() http.HandlerFunc {
 		// Convert offset into an int64.
 		offset64, err := strconv.ParseInt(offset, 0, 64)
 		if err != nil {
-			msg := "offset must be an int64"
-			err = errors.Wrap(err, msg)
+			err = errors.New("offset must be an int64")
 			s.err(w, err, http.StatusUnprocessableEntity)
 			return
 		}
@@ -138,8 +145,7 @@ func (s *server) PostsGetAll() http.HandlerFunc {
 		// Convert limit into an int64.
 		limit64, err := strconv.ParseInt(limit, 0, 64)
 		if err != nil {
-			msg := "limit must be an int64"
-			err = errors.Wrap(err, msg)
+			err = errors.New("limit must be an int64")
 			s.err(w, err, http.StatusUnprocessableEntity)
 			return
 		}
@@ -158,7 +164,7 @@ func (s *server) PostsGetAll() http.HandlerFunc {
 				v.ID.Hex(),
 				v.Title,
 				v.Description,
-				"/thumbnailfor" + v.Title,
+				"/poststhumbnail/" + v.ID.Hex(),
 			})
 		}
 
@@ -182,5 +188,23 @@ func (s *server) PostsDelete() http.HandlerFunc {
 
 		// Respond.
 		s.respond(w, http.StatusNoContent, nil)
+	}
+}
+
+func (s *server) PostsThumbnailGet() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		// Get the postID.
+		postID := mux.Vars(r)["postID"]
+
+		// Get the posts thumbnail.
+		buff, err := s.db.PostsThumbnailGet(postID)
+		if err != nil {
+			s.err(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		// Respond.
+		io.Copy(w, buff)
 	}
 }

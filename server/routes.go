@@ -2,12 +2,14 @@ package server
 
 func (s *server) loadRoutes() {
 
+	contentTypeJSON := s.addHeader("Content-Type", "application/json")
+
 	s.router.Handle(
 		"/posts",
 		adapt(
 			s.PostsCreate(),
 			s.logging(),
-			s.addHeader("Content-Type", "application/json"),
+			contentTypeJSON,
 		),
 	).Methods("POST")
 
@@ -16,7 +18,7 @@ func (s *server) loadRoutes() {
 		adapt(
 			s.PostsGet(),
 			s.logging(),
-			s.addHeader("Content-Type", "application/json"),
+			contentTypeJSON,
 		),
 	).Methods("GET")
 
@@ -25,7 +27,7 @@ func (s *server) loadRoutes() {
 		adapt(
 			s.PostsGetAll(),
 			s.logging(),
-			s.addHeader("Content-Type", "application/json"),
+			contentTypeJSON,
 		),
 	).Methods("GET")
 
@@ -34,7 +36,15 @@ func (s *server) loadRoutes() {
 		adapt(
 			s.PostsDelete(),
 			s.logging(),
-			s.addHeader("Content-Type", "application/json"),
+			contentTypeJSON,
 		),
 	).Methods("DELETE")
+
+	s.router.Handle(
+		"/poststhumbnail/{postID}",
+		adapt(
+			s.PostsThumbnailGet(),
+			s.logging(),
+		),
+	).Methods("GET")
 }

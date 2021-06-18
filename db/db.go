@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -17,6 +18,7 @@ type DB interface {
 	PostsGet(string) (*Post, error)
 	PostsGetAll(int64, int64) (*[]Post, error)
 	PostsDelete(string) error
+	PostsThumbnailGet(postID string) (*bytes.Buffer, error)
 }
 
 type db struct {
@@ -67,7 +69,7 @@ func (db *db) PostsCreate(post *Post, b []byte) error {
 	}
 
 	// Open an upload stream.
-	uploadStream, err := bucket.OpenUploadStream("thumbnailfor" + post.Title)
+	uploadStream, err := bucket.OpenUploadStream(post.Title)
 	if err != nil {
 		return errors.Wrap(err, operation)
 	}
@@ -151,9 +153,9 @@ func (db *db) PostsDelete(postID string) error {
 		return errors.Wrap(err, operation)
 	}
 
-	// Find a post with the same id.
+	// Find a post with the same postID.
 	var post Post
-	if err := posts.FindOne(ctx, bson.M{"_id": objID}).Decode(post); err != nil {
+	if err := posts.FindOne(ctx, bson.M{"_id": objID}).Decode(&post); err != nil {
 		return errors.Wrap(err, operation)
 	}
 
@@ -163,6 +165,53 @@ func (db *db) PostsDelete(postID string) error {
 	}
 
 	// Delete the thumbnail for the post.
-	_, err = fsFiles.DeleteOne(ctx, bson.M{"name": "thumbnailfor" + post.Title})
+	_, err = fsFiles.DeleteOne(ctx, bson.M{"filename": post.Title})
 	return errors.Wrap(err, operation)
+}
+
+func (db *db) PostsThumbnailGet(postID string) (*bytes.Buffer, error) {
+
+	const operation = "db.PostsThumbnailGet"
+
+	// Create context.
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(db.timeout)*time.Second)
+	defer cancel()
+
+	// Get the posts and the fs.files collection.
+	posts := db.client.Database("gallery").Collection("posts")
+	fsFiles := db.client.Database("gallery").Collection("fs.files")
+
+	// Generate an objectID.
+	objID, err := primitive.ObjectIDFromHex(postID)
+	if err != nil {
+		return nil, errors.Wrap(err, operation)
+	}
+
+	// Find a post with the same postID to get the thumbnail name.
+	var post Post
+	if err := posts.FindOne(ctx, bson.M{"_id": objID}).Decode(&post); err != nil {
+		return nil, errors.Wrap(err, operation)
+	}
+
+	// Find a thumbnail with the right filename field.
+	var results bson.M
+	err = fsFiles.FindOne(ctx, bson.M{"filename": post.Title}).Decode(&results)
+	if err != nil {
+		return nil, errors.Wrap(err, operation)
+	}
+
+	bucket, err := gridfs.NewBucket(db.client.Database("gallery"))
+	if err != nil {
+		return nil, errors.Wrap(err, operation)
+	}
+
+	var buf bytes.Buffer
+	_, err = bucket.DownloadToStreamByName(post.Title, &buf)
+	if err != nil {
+		return nil, errors.Wrap(err, operation)
+	}
+
+	return &buf, nil
 }
