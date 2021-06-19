@@ -200,11 +200,21 @@ func (s *server) PostsThumbnailGet() http.HandlerFunc {
 		// Get the posts thumbnail.
 		buff, err := s.db.PostsThumbnailGet(postID)
 		if err != nil {
+
+			if err == mongo.ErrNoDocuments {
+				s.err(w, errors.New("post not found"), http.StatusNotFound)
+				return
+			}
+
 			s.err(w, err, http.StatusInternalServerError)
 			return
 		}
 
 		// Respond.
-		io.Copy(w, buff)
+		w.WriteHeader(http.StatusOK)
+		if _, err := io.Copy(w, buff); err != nil {
+			s.err(w, err, http.StatusInternalServerError)
+			return
+		}
 	}
 }

@@ -81,21 +81,21 @@ func TestPostsCreate(t *testing.T) {
 			map[string]io.Reader{
 				"title":       strings.NewReader("Hello, World!"),
 				"description": strings.NewReader("Hello, World!"),
-				"thumbnail":   getFile(is, "for_handlers_test.png"),
+				"thumbnail":   getFile(is, "../for_unit_tests.png"),
 			},
 			http.StatusCreated,
 		},
 		{
 			map[string]io.Reader{
 				"title":     strings.NewReader("Hello, World!"),
-				"thumbnail": getFile(is, "for_handlers_test.png"),
+				"thumbnail": getFile(is, "../for_unit_tests.png"),
 			},
 			http.StatusUnprocessableEntity,
 		},
 		{
 			map[string]io.Reader{
 				"description": strings.NewReader("Hello, World!"),
-				"thumbnail":   getFile(is, "for_handlers_test.png"),
+				"thumbnail":   getFile(is, "../for_unit_tests.png"),
 			},
 			http.StatusUnprocessableEntity,
 		},
@@ -225,5 +225,34 @@ func TestPostsDelete(t *testing.T) {
 
 		// Run tests.
 		is.Equal(w.Code, http.StatusNoContent)
+	}
+}
+
+func TestPostsThumbnailGet(t *testing.T) {
+	is := is.New(t)
+
+	// Create the server with a mock db.
+	db := db.NewMockDB()
+	s := NewServer(db)
+
+	// Create a test table.
+	tt := []struct {
+		postID   string
+		expected int
+	}{
+		{"exists", http.StatusOK},
+		{"dosenotexist", http.StatusNotFound},
+	}
+
+	// Create the request and response-recorder.
+	for _, tc := range tt {
+		r := httptest.NewRequest("GET", "/poststhumbnail/"+tc.postID, nil)
+		w := httptest.NewRecorder()
+
+		// Do the request.
+		s.ServeHTTP(w, r)
+
+		// Run tests.
+		is.Equal(w.Code, tc.expected)
 	}
 }

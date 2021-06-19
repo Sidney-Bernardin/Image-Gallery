@@ -1,8 +1,12 @@
 package db
 
 import (
+	"bufio"
 	"bytes"
+	"io"
+	"os"
 
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -36,5 +40,36 @@ func (m *MockDB) PostsDelete(postID string) error {
 }
 
 func (m *MockDB) PostsThumbnailGet(postID string) (*bytes.Buffer, error) {
-	return nil, nil
+
+	const operation = "MockDB.PostsThumbnailGet"
+
+	if postID == "dosenotexist" {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	f, err := os.Open("../for_unit_tests.png")
+	if err != nil {
+		return nil, errors.Wrap(err, operation)
+	}
+	defer f.Close()
+
+	reader := bufio.NewReader(f)
+	buffer := bytes.NewBuffer(make([]byte, 0))
+	part := make([]byte, 1024)
+
+	var count int
+
+	for {
+		if count, err = reader.Read(part); err != nil {
+			break
+
+		}
+		buffer.Write(part[:count])
+
+	}
+	if err != io.EOF {
+		return nil, errors.New(operation + ": " + err.Error())
+	}
+
+	return buffer, nil
 }
