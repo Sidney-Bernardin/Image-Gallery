@@ -1,5 +1,7 @@
 # Golang-And-MongoDB-Image-Gallery
 
+A REST API that stores and retrieves posts that contain images as "thumbnails".
+
 ## Run.
 You can utilize the following flags.
 ```
