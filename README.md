@@ -5,7 +5,7 @@ A REST API that stores and retrieves posts that contain images as "thumbnails".
 ## Run.
 You can utilize the following flags.
 ```
-go run main.go -p 8080 -dburl -dbtimeout 9
+go run main.go -p 8080 -dburl mongodb://0.0.0.0:27017/ -dbtimeout 9
 ```
 
 ## Test.
