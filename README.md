@@ -3,9 +3,12 @@
 A REST API that stores and retrieves posts that contain images as "thumbnails".
 
 ## Run.
-You can utilize the following flags.
+Use 'go run' with these environment vars.
+PORT, DB_URL, DB_TIMEOUT
+
+Or use docker.
 ```
-go run main.go -p 8080 -dburl mongodb://0.0.0.0:27017/ -dbtimeout 9
+docker-compose up --build
 ```
 
 ## Test.

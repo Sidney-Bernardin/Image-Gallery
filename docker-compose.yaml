@@ -1,0 +1,21 @@
+version: "3.3"
+
+services:
+  mongodb:
+    image: mongo:4.0.4
+    container_name: mongodb
+    ports:
+      - 27017:27017
+
+  goapp:
+    build: .
+    container_name: gallery
+    environment:
+      PORT: "8080"
+      DB_URL: "mongodb://mongodb:27017/"
+      DB_TIMEOUT: "9"
+    ports:
+      - 8080:8080
+    depends_on:
+      - "mongodb"
+    tty: true
